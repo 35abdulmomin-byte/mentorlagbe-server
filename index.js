@@ -8,6 +8,7 @@ import { auth } from "./auth.js";
 import { verifyToken } from "./middleware/auth.js";
 import tuitionsRouter from "./routes/tuitions.js";
 import applicationsRouter from "./routes/applications.js";
+import statsRouter from "./routes/stats.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -52,6 +53,7 @@ app.get("/me", verifyToken, (req, res) => {
 // API routes
 app.use("/tuitions", tuitionsRouter);
 app.use("/applications", applicationsRouter);
+app.use("/stats", statsRouter);
 
 app.get("/", (req, res) => {
   res.send("MentorLagbe server is running");

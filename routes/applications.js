@@ -7,6 +7,20 @@ const router = Router();
 
 const phoneRegex = /^(\+?88)?01[3-9]\d{8}$/;
 
+// GET /applications/my  -> student এর সব application
+router.get("/my", verifyToken, verifyStudent, async (req, res) => {
+  try {
+    const { applications } = await getCollections();
+    const data = await applications
+      .find({ studentEmail: req.user.email })
+      .sort({ appliedAt: -1 })
+      .toArray();
+    res.send(data);
+  } catch (err) {
+    res.status(500).send({ message: "Failed to load applications" });
+  }
+});
+
 // GET /applications/check/:tuitionId  -> student আগে apply করেছে কি না
 router.get(
   "/check/:tuitionId",
@@ -81,6 +95,7 @@ router.post("/", verifyToken, verifyStudent, async (req, res) => {
       tuitionTitle: tuition.title,
       subject: tuition.subject,
       monthlyFee: tuition.monthlyFee,
+      tutorName: tuition.tutorName,
       tutorEmail: tuition.tutorEmail,
       studentName: student.name,
       studentEmail: student.email,
@@ -95,6 +110,32 @@ router.post("/", verifyToken, verifyStudent, async (req, res) => {
     res.status(201).send({ insertedId: result.insertedId });
   } catch (err) {
     res.status(500).send({ message: "Failed to submit application" });
+  }
+});
+
+// DELETE /applications/:id  -> শুধু নিজের pending application cancel করা যাবে
+router.delete("/:id", verifyToken, verifyStudent, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ message: "Invalid application id" });
+    }
+
+    const { applications } = await getCollections();
+    const result = await applications.deleteOne({
+      _id: new ObjectId(id),
+      studentEmail: req.user.email,
+      status: "pending",
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(400).send({
+        message: "শুধু pending application cancel করা যায়",
+      });
+    }
+    res.send({ deleted: true });
+  } catch (err) {
+    res.status(500).send({ message: "Failed to cancel application" });
   }
 });
 
