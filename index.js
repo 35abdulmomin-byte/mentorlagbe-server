@@ -6,6 +6,7 @@ import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import { connectDB } from "./db.js";
 import { auth } from "./auth.js";
 import { verifyToken } from "./middleware/auth.js";
+import tuitionsRouter from "./routes/tuitions.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -46,6 +47,9 @@ app.post("/jwt", async (req, res) => {
 app.get("/me", verifyToken, (req, res) => {
   res.send({ user: req.user });
 });
+
+// Public tuitions API
+app.use("/tuitions", tuitionsRouter);
 
 app.get("/", (req, res) => {
   res.send("MentorLagbe server is running");
