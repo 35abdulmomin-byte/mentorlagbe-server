@@ -13,7 +13,6 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
-    autoSignIn: false,
   },
 
   user: {
@@ -33,6 +32,14 @@ export const auth = betterAuth({
           // সাইনআপে কেউ যেন নিজেকে admin বানাতে না পারে
           const role = user.role === "tutor" ? "tutor" : "student";
           return { data: { ...user, role, plan: "free" } };
+        },
+      },
+      update: {
+        before: async (user) => {
+          // client থেকে role বা plan বদলানো আটকানো
+          // eslint-disable-next-line no-unused-vars
+          const { role, plan, ...safe } = user;
+          return { data: safe };
         },
       },
     },
