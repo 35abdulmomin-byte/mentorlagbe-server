@@ -7,6 +7,7 @@ import { connectDB } from "./db.js";
 import { auth } from "./auth.js";
 import { verifyToken } from "./middleware/auth.js";
 import tuitionsRouter from "./routes/tuitions.js";
+import applicationsRouter from "./routes/applications.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -48,8 +49,9 @@ app.get("/me", verifyToken, (req, res) => {
   res.send({ user: req.user });
 });
 
-// Public tuitions API
+// API routes
 app.use("/tuitions", tuitionsRouter);
+app.use("/applications", applicationsRouter);
 
 app.get("/", (req, res) => {
   res.send("MentorLagbe server is running");
