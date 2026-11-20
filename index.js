@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import { connectDB } from "./db.js";
 import { auth } from "./auth.js";
+import { ensureAdmin } from "./ensureAdmin.js";
 import { verifyToken } from "./middleware/auth.js";
 import tuitionsRouter from "./routes/tuitions.js";
 import applicationsRouter from "./routes/applications.js";
@@ -79,7 +80,8 @@ app.get("/", (req, res) => {
 });
 
 connectDB()
-  .then(() => {
+  .then(async () => {
+    await ensureAdmin();
     app.listen(port, () => console.log(`Server running on port ${port}`));
   })
   .catch((err) => console.error("DB connection failed:", err));
