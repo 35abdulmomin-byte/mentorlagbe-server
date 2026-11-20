@@ -10,17 +10,30 @@ if (!email) {
 
 const run = async () => {
   const { users } = await getCollections();
-  const result = await users.updateOne(
-    { email: email.trim().toLowerCase() },
-    { $set: { role: "admin" } }
-  );
+  const query = { email: email.trim().toLowerCase() };
 
-  if (result.matchedCount === 0) {
-    console.error(`"${email}" ইমেইলে কোনো user পাওয়া যায়নি। আগে Sign Up করো।`);
+  const before = await users.findOne(query, {
+    projection: { email: 1, role: 1 },
+  });
+
+  if (!before) {
+    console.error(`"${email}" ইমেইলে কোনো user পাওয়া যায়নি।`);
+    const all = await users
+      .find({}, { projection: { email: 1, role: 1 } })
+      .toArray();
+    console.log("ডেটাবেসে থাকা ইউজার:");
+    all.forEach((u) => console.log(` - ${u.email} (${u.role})`));
     process.exit(1);
   }
 
-  console.log(`${email} এখন admin`);
+  console.log(`আগে: ${before.email} -> ${before.role}`);
+
+  await users.updateOne(query, { $set: { role: "admin" } });
+
+  const after = await users.findOne(query, {
+    projection: { email: 1, role: 1 },
+  });
+  console.log(`এখন: ${after.email} -> ${after.role}`);
   process.exit(0);
 };
 
