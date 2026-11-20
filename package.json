@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-  "scripts": {
+ "scripts": {
   "dev": "nodemon index.js",
   "start": "node index.js",
   "seed": "node seed.js",
-  "make-admin": "node make-admin.js"
+  "make-admin": "node make-admin.js",
+  "seed-users": "node seed-users.js"
 },
   "keywords": [],
   "author": "",
