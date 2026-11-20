@@ -6,6 +6,7 @@ import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import { connectDB } from "./db.js";
 import { auth } from "./auth.js";
 import { ensureAdmin } from "./ensureAdmin.js";
+import { ensurePaymentIndexes } from "./utils/stripe.js";
 import { verifyToken } from "./middleware/auth.js";
 import tuitionsRouter from "./routes/tuitions.js";
 import applicationsRouter from "./routes/applications.js";
@@ -13,6 +14,7 @@ import statsRouter from "./routes/stats.js";
 import usersRouter from "./routes/users.js";
 import tutorRouter from "./routes/tutor.js";
 import adminRouter from "./routes/admin.js";
+import paymentsRouter, { stripeWebhook } from "./routes/payments.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -27,6 +29,13 @@ app.use(
 
 // BetterAuth হ্যান্ডলার (অবশ্যই express.json() এর আগে)
 app.all("/api/auth/*splat", toNodeHandler(auth));
+
+// Stripe Webhook (raw body লাগে, তাই express.json() এর আগে)
+app.post(
+  "/webhook/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
 
 app.use(express.json());
 
@@ -74,6 +83,7 @@ app.use("/stats", statsRouter);
 app.use("/users", usersRouter);
 app.use("/tutor", tutorRouter);
 app.use("/admin", adminRouter);
+app.use("/payments", paymentsRouter);
 
 app.get("/", (req, res) => {
   res.send("MentorLagbe server is running");
@@ -82,6 +92,7 @@ app.get("/", (req, res) => {
 connectDB()
   .then(async () => {
     await ensureAdmin();
+    await ensurePaymentIndexes();
     app.listen(port, () => console.log(`Server running on port ${port}`));
   })
   .catch((err) => console.error("DB connection failed:", err));
