@@ -5,10 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js",
-    "seed": "node seed.js"
-  },
+  "dev": "nodemon index.js",
+  "start": "node index.js",
+  "seed": "node seed.js",
+  "make-admin": "node make-admin.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

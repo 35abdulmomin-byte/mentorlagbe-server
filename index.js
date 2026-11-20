@@ -10,6 +10,8 @@ import tuitionsRouter from "./routes/tuitions.js";
 import applicationsRouter from "./routes/applications.js";
 import statsRouter from "./routes/stats.js";
 import usersRouter from "./routes/users.js";
+import tutorRouter from "./routes/tutor.js";
+import adminRouter from "./routes/admin.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -69,6 +71,8 @@ app.use("/tuitions", tuitionsRouter);
 app.use("/applications", applicationsRouter);
 app.use("/stats", statsRouter);
 app.use("/users", usersRouter);
+app.use("/tutor", tutorRouter);
+app.use("/admin", adminRouter);
 
 app.get("/", (req, res) => {
   res.send("MentorLagbe server is running");
