@@ -19,6 +19,17 @@ import paymentsRouter, { stripeWebhook } from "./routes/payments.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
+// অনুমোদিত client ঠিকানা (কমা দিয়ে একাধিক, শেষের স্ল্যাশ বাদ)
+const allowedOrigins = [
+  ...new Set([
+    ...(process.env.CLIENT_URL || "")
+      .split(",")
+      .map((item) => item.trim().replace(/\/+$/, ""))
+      .filter(Boolean),
+    "http://localhost:3000",
+  ]),
+];
+
 // ডেটাবেস আর admin প্রস্তুত না হওয়া পর্যন্ত রিকোয়েস্ট অপেক্ষা করবে
 const ready = (async () => {
   await connectDB();
@@ -38,7 +49,13 @@ app.use(async (req, res, next) => {
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      // origin না থাকলে (server থেকে server, Postman) অনুমতি
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS: ${origin} অনুমোদিত নয়`));
+    },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
   })

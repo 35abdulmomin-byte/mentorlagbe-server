@@ -4,22 +4,33 @@ import { connectDB } from "./db.js";
 
 const db = await connectDB();
 
+// CLIENT_URL এ কমা দিয়ে একাধিক ঠিকানা দেওয়া যায়, শেষের স্ল্যাশ বাদ যায়
+const clientOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((item) => item.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+const trustedOrigins = [
+  ...new Set([...clientOrigins, "http://localhost:3000"]),
+];
+
+const baseURL = (process.env.BETTER_AUTH_URL || "").trim().replace(/\/+$/, "");
+
+console.log("Trusted origins:", trustedOrigins.join(", "));
+console.log("Auth base URL:", baseURL);
+
 // Google এর কী .env এ থাকলেই Google লগইন চালু হবে
 const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const googleEnabled = Boolean(googleClientId && googleClientSecret);
 
-console.log(
-  googleEnabled
-    ? "Google login: চালু"
-    : "Google login: বন্ধ (.env এ GOOGLE_CLIENT_ID বা GOOGLE_CLIENT_SECRET নেই)"
-);
+console.log(googleEnabled ? "Google login: চালু" : "Google login: বন্ধ");
 
 export const auth = betterAuth({
   database: mongodbAdapter(db),
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
-  trustedOrigins: [process.env.CLIENT_URL],
+  trustedOrigins,
 
   emailAndPassword: {
     enabled: true,
