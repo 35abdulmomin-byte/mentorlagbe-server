@@ -19,6 +19,23 @@ import paymentsRouter, { stripeWebhook } from "./routes/payments.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
+// ডেটাবেস আর admin প্রস্তুত না হওয়া পর্যন্ত রিকোয়েস্ট অপেক্ষা করবে
+const ready = (async () => {
+  await connectDB();
+  await ensureAdmin();
+  await ensurePaymentIndexes();
+})();
+ready.catch((err) => console.error("Startup failed:", err));
+
+app.use(async (req, res, next) => {
+  try {
+    await ready;
+    next();
+  } catch (err) {
+    res.status(500).send({ message: "Server is not ready" });
+  }
+});
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -52,10 +69,6 @@ app.post("/jwt", async (req, res) => {
     });
 
     if (!session) {
-      console.error(
-        "[/jwt] session পাওয়া যায়নি, cookie header:",
-        req.headers.cookie ? "আছে" : "নেই"
-      );
       return res.status(401).send({ message: "No active session" });
     }
 
@@ -89,10 +102,13 @@ app.get("/", (req, res) => {
   res.send("MentorLagbe server is running");
 });
 
-connectDB()
-  .then(async () => {
-    await ensureAdmin();
-    await ensurePaymentIndexes();
-    app.listen(port, () => console.log(`Server running on port ${port}`));
-  })
-  .catch((err) => console.error("DB connection failed:", err));
+// লোকালে চালালে listen করবে, Vercel এ করবে না
+if (!process.env.VERCEL) {
+  ready
+    .then(() => {
+      app.listen(port, () => console.log(`Server running on port ${port}`));
+    })
+    .catch(() => {});
+}
+
+export default app;
