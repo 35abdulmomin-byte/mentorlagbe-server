@@ -4,6 +4,17 @@ import { connectDB } from "./db.js";
 
 const db = await connectDB();
 
+// Google এর কী .env এ থাকলেই Google লগইন চালু হবে
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+const googleEnabled = Boolean(googleClientId && googleClientSecret);
+
+console.log(
+  googleEnabled
+    ? "Google login: চালু"
+    : "Google login: বন্ধ (.env এ GOOGLE_CLIENT_ID বা GOOGLE_CLIENT_SECRET নেই)"
+);
+
 export const auth = betterAuth({
   database: mongodbAdapter(db),
   baseURL: process.env.BETTER_AUTH_URL,
@@ -14,6 +25,15 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 6,
   },
+
+  socialProviders: googleEnabled
+    ? {
+        google: {
+          clientId: googleClientId,
+          clientSecret: googleClientSecret,
+        },
+      }
+    : {},
 
   user: {
     modelName: "users",
