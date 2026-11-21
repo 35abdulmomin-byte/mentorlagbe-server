@@ -5,6 +5,7 @@ import { verifyToken } from "../middleware/auth.js";
 const router = Router();
 
 const phoneRegex = /^(\+?88)?01[3-9]\d{8}$/;
+const ONBOARD_WINDOW_MS = 15 * 60 * 1000;
 
 // GET /users/me  -> নিজের প্রোফাইল
 router.get("/me", verifyToken, async (req, res) => {
@@ -73,6 +74,42 @@ router.patch("/me", verifyToken, async (req, res) => {
     res.send({ updated: true });
   } catch (err) {
     res.status(500).send({ message: "Failed to update profile" });
+  }
+});
+
+// POST /users/me/onboard-role
+// Google দিয়ে নতুন সাইন আপ করা ইউজার Student বা Tutor বেছে নেওয়ার জন্য।
+// শুধু প্রথম ১৫ মিনিটে, একবারই, আর কখনো admin হওয়া যাবে না।
+router.post("/me/onboard-role", verifyToken, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (role !== "student" && role !== "tutor") {
+      return res.status(400).send({ message: "Role student বা tutor হতে হবে" });
+    }
+
+    const { users } = await getCollections();
+    const user = await users.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+    if (user.role === "admin") {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+
+    const age = Date.now() - new Date(user.createdAt).getTime();
+    if (user.onboarded || !(age >= 0 && age <= ONBOARD_WINDOW_MS)) {
+      return res
+        .status(403)
+        .send({ message: "Role এখন আর বদলানো যাবে না" });
+    }
+
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { role, onboarded: true, updatedAt: new Date() } }
+    );
+    res.send({ updated: true, role });
+  } catch (err) {
+    res.status(500).send({ message: "Failed to set role" });
   }
 });
 
